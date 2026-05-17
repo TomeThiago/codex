@@ -1,2 +1,19 @@
 import { ButtonHTMLAttributes } from "react";
-export function Button(props:ButtonHTMLAttributes<HTMLButtonElement>){return <button {...props} className={`px-3 py-2 rounded-md bg-[var(--brand-primary,#2563EB)] text-white ${props.className??""}`}/>;}
+import { cn } from "@/lib/utils";
+
+type Variant = "default" | "outline" | "ghost";
+
+export function Button({ className, children, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
+  return (
+    <button
+      {...props}
+      className={cn(
+        "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition disabled:opacity-50",
+        "bg-[var(--brand-primary)] text-white hover:opacity-90",
+        className,
+      )}
+    >
+      {children}
+    </button>
+  );
+}
