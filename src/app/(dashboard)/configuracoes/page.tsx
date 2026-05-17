@@ -1,0 +1,1 @@
+export default function Page(){return <div className='space-y-2'><h1 className='text-2xl font-semibold capitalize'>configuracoes</h1><p className='text-slate-600'>Módulo configuracoes do AgendaFácil.</p></div>}
