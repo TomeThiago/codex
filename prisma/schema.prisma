@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AppointmentStatus {
+  CONFIRMED
+  CANCELLED
+  DONE
+}
+
+enum WhatsAppProvider {
+  EVOLUTION
+  TWILIO
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  businessName  String
+  slug          String   @unique
+  phone         String?
+
+  settings      BusinessSettings?
+  services      Service[]
+  professionals Professional[]
+  clients       Client[]
+  appointments  Appointment[]
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model BusinessSettings {
+  id                    String           @id @default(cuid())
+  userId                String           @unique
+  user                  User             @relation(fields: [userId], references: [id])
+
+  whatsappPhone         String?
+  whatsappProvider      WhatsAppProvider @default(EVOLUTION)
+
+  remindersEnabled      Boolean          @default(true)
+  reminderMinutesBefore Int              @default(1440)
+
+  timezone              String           @default("America/Sao_Paulo")
+  openingHours          Json?
+
+  primaryColor          String           @default("#2563EB")
+  secondaryColor        String?
+  publicTitle           String?
+  publicDescription     String?
+  logoUrl               String?
+
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  durationMins Int
+  price        Decimal       @db.Decimal(10, 2)
+  active       Boolean       @default(true)
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+
+  appointments Appointment[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model Professional {
+  id           String        @id @default(cuid())
+  name         String
+  role         String?
+  phone        String?
+  email        String?
+  avatarUrl    String?
+  color        String?       @default("#2563EB")
+  active       Boolean       @default(true)
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+
+  appointments Appointment[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model Client {
+  id           String        @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  notes        String?
+
+  userId       String
+  user         User          @relation(fields: [userId], references: [id])
+
+  appointments Appointment[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([userId])
+  @@unique([userId, phone])
+}
+
+model Appointment {
+  id             String            @id @default(cuid())
+
+  clientId       String?
+  client         Client?           @relation(fields: [clientId], references: [id])
+
+  clientName     String?
+  clientPhone    String?
+
+  serviceId      String
+  service        Service           @relation(fields: [serviceId], references: [id])
+
+  professionalId String?
+  professional   Professional?     @relation(fields: [professionalId], references: [id])
+
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
+
+  date           DateTime
+  endDate        DateTime
+  status         AppointmentStatus @default(CONFIRMED)
+
+  notes          String?
+
+  reminderSent   Boolean           @default(false)
+  reminderSentAt DateTime?
+  reminderError  String?
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([userId, date])
+  @@index([professionalId, date])
+  @@index([reminderSent, status, date])
+}
+
+model ReminderLog {
+  id            String   @id @default(cuid())
+  appointmentId String
+  provider      String
+  status        String
+  error         String?
+  createdAt     DateTime @default(now())
+
+  @@index([appointmentId])
+}
